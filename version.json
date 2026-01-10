@@ -1,0 +1,179 @@
+{
+  "name": "上市储量价值评估石油生产数据预处理系统",
+  "name_en": "Oil Production Data Preprocessing System for Listed Reserve Value Assessment",
+  "version": "1.0.0",
+  "release_date": "2025-01-10",
+  "author": "开发团队",
+  "description": "一个专业的石油生产数据预处理系统，用于处理A2数据表、SEC数据表和评估数据表",
+  "license": "MIT",
+  "repository": "https://github.com/your-org/oilSystem",
+  "keywords": [
+    "石油数据",
+    "数据预处理",
+    "SEC评估",
+    "储量评估",
+    "A2数据表",
+    "油井管理"
+  ],
+  "technologies": {
+    "backend": {
+      "language": "Python 3.8+",
+      "framework": "Flask 2.3+",
+      "data_processing": "Pandas 2.0+",
+      "file_handling": "openpyxl 3.1+"
+    },
+    "frontend": {
+      "html": "HTML5",
+      "css": "CSS3",
+      "javascript": "ES6+"
+    }
+  },
+  "features": [
+    "A2表与SEC表智能对比",
+    "井变化自动识别（注销井、新投井、变化井）",
+    "SEC数据表自动生成",
+    "评估数据表生成（常规油+页岩油）",
+    "三级树形结构可视化",
+    "批量数据处理（支持120万+条记录）",
+    "Web界面操作",
+    "RESTful API接口"
+  ],
+  "modules": {
+    "business_service_1": {
+      "name": "第一业务界面",
+      "description": "对比上年度A2表与SEC表",
+      "status": "completed",
+      "version": "1.0.0"
+    },
+    "business_service_2": {
+      "name": "第二业务界面",
+      "description": "对比本年度与上年度A2表，识别井变化",
+      "status": "completed",
+      "version": "1.0.0"
+    },
+    "business_service_3": {
+      "name": "第三业务界面",
+      "description": "生成本年度SEC数据表",
+      "status": "completed",
+      "version": "1.0.0"
+    },
+    "business_service_4": {
+      "name": "第四业务界面",
+      "description": "生成评估数据表（常规油+页岩油）",
+      "status": "completed",
+      "version": "1.0.0"
+    }
+  },
+  "performance": {
+    "max_wells_per_batch": 100000,
+    "max_records_per_batch": 1200000,
+    "max_file_size_mb": 100,
+    "avg_response_time_seconds": 10
+  },
+  "code_statistics": {
+    "total_lines": 3681,
+    "backend_lines": 1640,
+    "frontend_lines": 753,
+    "documentation_lines": 1288,
+    "files": 24,
+    "python_files": 12,
+    "html_files": 1,
+    "javascript_files": 1,
+    "markdown_files": 6
+  },
+  "changelog": {
+    "1.0.0": {
+      "date": "2025-01-10",
+      "changes": [
+        "✅ 完成数据模型层实现",
+        "✅ 完成4个业务服务实现",
+        "✅ 完成数据导入导出工具",
+        "✅ 完成Flask API接口",
+        "✅ 完成Web前端界面",
+        "✅ 完成完整文档编写",
+        "✅ 完成示例代码和测试脚本"
+      ]
+    }
+  },
+  "requirements": {
+    "python": ">=3.8",
+    "pandas": ">=2.0.3",
+    "openpyxl": ">=3.1.2",
+    "numpy": ">=1.24.3",
+    "flask": ">=2.3.2",
+    "flask-cors": ">=4.0.0",
+    "python-dateutil": ">=2.8.2",
+    "xlrd": ">=2.0.1"
+  },
+  "installation": {
+    "method_1": {
+      "name": "自动安装（推荐）",
+      "steps": [
+        "./install.sh",
+        "./start.sh"
+      ]
+    },
+    "method_2": {
+      "name": "手动安装",
+      "steps": [
+        "pip install -r requirements.txt",
+        "python3 example_usage.py",
+        "cd backend && python3 app.py"
+      ]
+    }
+  },
+  "documentation": {
+    "README.md": "项目概述和快速开始",
+    "QUICK_START.md": "5分钟快速入门指南",
+    "USER_GUIDE.md": "详细使用手册和API文档",
+    "PROJECT_SUMMARY.md": "技术架构和实现细节",
+    "DEMO.md": "系统演示和功能说明",
+    "example_usage.py": "Python API使用示例"
+  },
+  "api_endpoints": [
+    {
+      "path": "/",
+      "method": "GET",
+      "description": "系统首页"
+    },
+    {
+      "path": "/api/upload",
+      "method": "POST",
+      "description": "上传文件"
+    },
+    {
+      "path": "/api/business1/compare",
+      "method": "POST",
+      "description": "第一业务界面：对比A2与SEC表"
+    },
+    {
+      "path": "/api/business2/compare",
+      "method": "POST",
+      "description": "第二业务界面：对比年度A2表"
+    },
+    {
+      "path": "/api/business3/generate",
+      "method": "POST",
+      "description": "第三业务界面：生成SEC数据表"
+    },
+    {
+      "path": "/api/business4/generate_conventional",
+      "method": "POST",
+      "description": "第四业务界面：生成评估数据表"
+    },
+    {
+      "path": "/api/download/<filename>",
+      "method": "GET",
+      "description": "下载文件"
+    },
+    {
+      "path": "/api/cached_data",
+      "method": "GET",
+      "description": "获取缓存数据列表"
+    }
+  ],
+  "contact": {
+    "email": "support@example.com",
+    "documentation": "https://github.com/your-org/oilSystem/wiki"
+  }
+}

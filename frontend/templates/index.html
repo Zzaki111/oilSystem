@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上市储量价值评估石油生产数据预处理系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', SimSun, serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #003366;
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-bottom: 3px solid #0066cc;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: flex;
+            min-height: 600px;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: #f8f9fa;
+            border-right: 1px solid #e0e0e0;
+            padding: 20px;
+        }
+
+        .nav-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+            border: 1px solid #e0e0e0;
+        }
+
+        .nav-item:hover {
+            background: #0066cc;
+            color: white;
+            border-color: #0066cc;
+        }
+
+        .nav-item.active {
+            background: #0066cc;
+            color: white;
+            border-color: #0066cc;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px;
+        }
+
+        .business-panel {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .business-panel.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .panel-header {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #003366;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #0066cc;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-group input[type="file"],
+        .form-group input[type="text"],
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #0066cc;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: #0066cc;
+            color: white;
+            border: 1px solid #0066cc;
+        }
+
+        .btn-primary:hover {
+            background: #0052a3;
+            border-color: #0052a3;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #006666;
+            color: white;
+            border: 1px solid #006666;
+        }
+
+        .btn-success:hover {
+            background: #004d4d;
+            border-color: #004d4d;
+        }
+
+        .result-box {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            border-left: 4px solid #0066cc;
+            border: 1px solid #e0e0e0;
+        }
+
+        .result-box h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .result-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .tree-view {
+            margin-top: 20px;
+        }
+
+        .tree-node {
+            margin-left: 20px;
+            padding: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .tree-node:hover {
+            background: #f0f0f0;
+            border-radius: 4px;
+        }
+
+        .tree-toggle {
+            display: inline-block;
+            width: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #0066cc;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        small {
+            display: block;
+            margin-top: 5px;
+            font-size: 12px;
+        }
+
+        input[type="file"]::-webkit-file-upload-button {
+            background: #0066cc;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        input[type="file"]::-webkit-file-upload-button:hover {
+            background: #0052a3;
+        }
+
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            display: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert.show {
+            display: flex;
+            animation: slideDown 0.3s;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .alert-success:before {
+            content: '✓';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background: #28a745;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 20px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .alert-error:before {
+            content: '✕';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 20px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .statistics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 6px;
+            text-align: center;
+            color: #333;
+            border: 1px solid #d9d9d9;
+        }
+
+        .stat-card .number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #0066cc;
+            margin-bottom: 5px;
+        }
+
+        .stat-card .label {
+            font-size: 13px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>上市储量价值评估石油生产数据预处理系统</h1>
+            <p>Oil Production Data Preprocessing System for Listed Reserve Value Assessment</p>
+        </div>
+
+        <div class="content">
+            <div class="sidebar">
+                <h3 style="margin-bottom: 20px; color: #333;">业务模块</h3>
+                <div class="nav-item active" data-panel="panel1">
+                    <strong>第一业务界面</strong>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">A2与SEC表对比</div>
+                </div>
+                <div class="nav-item" data-panel="panel2">
+                    <strong>第二业务界面</strong>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">识别井变化</div>
+                </div>
+                <div class="nav-item" data-panel="panel3">
+                    <strong>第三业务界面</strong>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">生成SEC数据表</div>
+                </div>
+                <div class="nav-item" data-panel="panel4">
+                    <strong>第四业务界面</strong>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">生成评估数据表</div>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <!-- 第一业务界面 -->
+                <div id="panel1" class="business-panel active">
+                    <div class="panel-header">第一业务界面：对比A2表与SEC表</div>
+                    
+                    <div class="alert" id="alert1"></div>
+
+                    <div style="background: #f8f9fa; padding: 15px; border-left: 4px solid #0066cc; border: 1px solid #e0e0e0; margin-bottom: 20px;">
+                        <strong>功能说明：</strong>
+                        <p style="margin: 5px 0 0 0; color: #555;">对比A2数据表与SEC数据表，识别参评井和非参评井，生成油井单元属性表。</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>上传上年度A2数据表：</label>
+                        <input type="file" id="a2File1" accept=".xlsx,.xls">
+                        <small style="color: #666;">支持.xlsx和.xls格式</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>上传上年度SEC数据表：</label>
+                        <input type="file" id="secFile1" accept=".xlsx,.xls">
+                        <small style="color: #666;">支持.xlsx和.xls格式</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>年月（6位数字）：</label>
+                        <input type="text" id="yearMonth1" placeholder="202409" maxlength="6">
+                        <small style="color: #666;">格式：YYYYMM，例如：202409</small>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="compareA2SEC()">开始对比</button>
+                    <button class="btn btn-secondary" onclick="clearPanel1()">清空</button>
+
+                    <div class="loading" id="loading1">
+                        <div class="spinner"></div>
+                        <p style="margin-top: 10px;">处理中，请稍候...</p>
+                    </div>
+
+                    <div id="result1" class="result-box" style="display: none;">
+                        <h3>处理结果</h3>
+                        <div id="statistics1" class="statistics"></div>
+                        <div id="treeView1" class="tree-view"></div>
+                    </div>
+                </div>
+
+                <!-- 第二业务界面 -->
+                <div id="panel2" class="business-panel">
+                    <div class="panel-header">第二业务界面：对比本年度与上年度A2表</div>
+                    
+                    <div class="alert" id="alert2"></div>
+
+                    <div style="background: #f8f9fa; padding: 15px; border-left: 4px solid #0066cc; border: 1px solid #e0e0e0; margin-bottom: 20px;">
+                        <strong>功能说明：</strong>
+                        <p style="margin: 5px 0 0 0; color: #555;">对比两年度A2表，识别注销井、新投井和单元归属变化井。</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>上传上年度A2数据表：</label>
+                        <input type="file" id="lastYearA2" accept=".xlsx,.xls">
+                        <small style="color: #666;">例如：a2-202409.xlsx</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>上传本年度A2数据表：</label>
+                        <input type="file" id="thisYearA2" accept=".xlsx,.xls">
+                        <small style="color: #666;">例如：a2-202509.xlsx</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>年份（4位数字）：</label>
+                        <input type="text" id="year2" placeholder="2025" maxlength="4">
+                        <small style="color: #666;">格式：YYYY，例如：2025</small>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="compareYearlyA2()">开始对比</button>
+                    <button class="btn btn-secondary" onclick="clearPanel2()">清空</button>
+
+                    <div class="loading" id="loading2">
+                        <div class="spinner"></div>
+                        <p style="margin-top: 10px;">处理中，请稍候...</p>
+                    </div>
+
+                    <div id="result2" class="result-box" style="display: none;">
+                        <h3>处理结果</h3>
+                        <div id="statistics2" class="statistics"></div>
+                    </div>
+                </div>
+
+                <!-- 第三业务界面 -->
+                <div id="panel3" class="business-panel">
+                    <div class="panel-header">第三业务界面：生成本年度SEC数据表</div>
+                    
+                    <div class="alert" id="alert3"></div>
+
+                    <div style="background: #f8f9fa; padding: 15px; border-left: 4px solid #0066cc; border: 1px solid #e0e0e0; margin-bottom: 20px;">
+                        <strong>功能说明：</strong>
+                        <p style="margin: 5px 0 0 0; color: #555;">根据单元变化、老区新井、扩边/PUD转PDP/PDNP井等信息，生成本年度SEC数据表。</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>上传上年度SEC数据表：</label>
+                        <input type="file" id="lastYearSEC" accept=".xlsx,.xls">
+                        <small style="color: #666;">必填项</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>上传单元变化表（可选）：</label>
+                        <input type="file" id="unitChangeFile" accept=".xlsx,.xls">
+                        <small style="color: #666;">若无单元变化可不上传</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>上传老区新井表（可选）：</label>
+                        <input type="file" id="oldAreaWellsFile" accept=".xlsx,.xls">
+                        <small style="color: #666;">若无老区新井可不上传</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>上传扩边/PUD转PDP/PDNP表（可选）：</label>
+                        <input type="file" id="pudPdpPdnpFile" accept=".xlsx,.xls">
+                        <small style="color: #666;">若无此类变化可不上传</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>本年度年份（4位数字）：</label>
+                        <input type="text" id="thisYear3" placeholder="2025" maxlength="4">
+                        <small style="color: #666;">格式：YYYY，例如：2025</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>本年度年月（6位数字）：</label>
+                        <input type="text" id="thisYearMonth3" placeholder="202509" maxlength="6">
+                        <small style="color: #666;">格式：YYYYMM，例如：202509</small>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="generateSECTable()">生成SEC数据表</button>
+                    <button class="btn btn-secondary" onclick="clearPanel3()">清空</button>
+
+                    <div class="loading" id="loading3">
+                        <div class="spinner"></div>
+                        <p style="margin-top: 10px;">处理中，请稍候...</p>
+                    </div>
+
+                    <div id="result3" class="result-box" style="display: none;">
+                        <h3>生成结果</h3>
+                        <div id="content3"></div>
+                    </div>
+                </div>
+
+                <!-- 第四业务界面 -->
+                <div id="panel4" class="business-panel">
+                    <div class="panel-header">第四业务界面：生成评估数据表</div>
+                    
+                    <div class="alert" id="alert4"></div>
+
+                    <div style="background: #f8f9fa; padding: 15px; border-left: 4px solid #0066cc; border: 1px solid #e0e0e0; margin-bottom: 20px;">
+                        <strong>功能说明：</strong>
+                        <p style="margin: 5px 0 0 0; color: #555;">生成常规油和页岩油的评估数据表，包括历史数据调整和年度数据更新。</p>
+                        <ul style="margin: 10px 0 0 20px; color: #555; line-height: 1.8;">
+                            <li><strong>常规油评估：</strong>按SEC单元汇总生成连续月份数据</li>
+                            <li><strong>页岩油评估：</strong>按单井生成连续月份数据</li>
+                            <li><strong>历史数据：</strong>支持历史数据调整和新井数据添加</li>
+                        </ul>
+                    </div>
+
+                    <div class="form-group">
+                        <label>评估类型：</label>
+                        <select id="evalType4">
+                            <option value="conventional">常规油评估（按SEC单元汇总）</option>
+                            <option value="shale">页岩油评估（按单井）</option>
+                        </select>
+                        <small style="color: #666;">请根据实际需求选择评估类型</small>
+                    </div>
+
+                    <div style="background: #f8f9fa; padding: 10px; border: 1px solid #e0e0e0; margin-top: 20px;">
+                        <p style="color: #666; margin: 0;"><strong>提示：</strong>该功能需要配合历史评估数据、本年度A2表等数据使用，请参考后端API文档。</p>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="generateEvaluationTable()">生成评估数据表</button>
+                    <button class="btn btn-secondary" onclick="clearPanel4()">清空</button>
+
+                    <div class="loading" id="loading4">
+                        <div class="spinner"></div>
+                        <p style="margin-top: 10px;">处理中，请稍候...</p>
+                    </div>
+
+                    <div id="result4" class="result-box" style="display: none;">
+                        <h3>生成结果</h3>
+                        <div id="content4"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="background: #003366; padding: 15px; text-align: center; border-top: 1px solid #ccc;">
+            <p style="margin: 0; color: white; font-size: 13px;">
+                石油生产数据预处理系统 v1.0 | © 2026 中国石油集团 | 技术支持：信息技术部
+            </p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // 导航切换
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                // 移除所有active
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                document.querySelectorAll('.business-panel').forEach(p => p.classList.remove('active'));
+                
+                // 添加active
+                this.classList.add('active');
+                const panelId = this.getAttribute('data-panel');
+                document.getElementById(panelId).classList.add('active');
+            });
+        });
+
+        // API基础URL
+        const API_BASE = '/api';
+        
+        // 全局变量存储上传的文件key
+        let uploadedFiles = {};
+
+        // 显示提示信息
+        function showAlert(panelNum, message, type = 'success') {
+            const alert = document.getElementById(`alert${panelNum}`);
+            alert.className = `alert alert-${type} show`;
+            alert.textContent = message;
+            setTimeout(() => {
+                alert.classList.remove('show');
+            }, 5000);
+        }
+
+        // 显示加载状态
+        function showLoading(panelNum, show = true) {
+            const loading = document.getElementById(`loading${panelNum}`);
+            if (show) {
+                loading.classList.add('show');
+            } else {
+                loading.classList.remove('show');
+            }
+        }
+
+        // 上传文件
+        async function uploadFile(fileInput, fileType) {
+            const file = fileInput.files[0];
+            if (!file) {
+                throw new Error('请选择文件');
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('type', fileType);
+
+            const response = await fetch(`${API_BASE}/upload`, {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.message);
+            }
+
+            return result;
+        }
+
+        // 第一业务界面功能
+        async function compareA2SEC() {
+            try {
+                showLoading(1, true);
+                const yearMonth = document.getElementById('yearMonth1').value;
+                
+                if (!yearMonth || yearMonth.length !== 6) {
+                    throw new Error('请输入6位数字的年月，如202409');
+                }
+
+                // 上传A2文件
+                showAlert(1, '正在上传A2数据表...', 'success');
+                const a2Result = await uploadFile(document.getElementById('a2File1'), 'a2');
+                uploadedFiles['a2_1'] = a2Result.cache_key;
+
+                // 上传SEC文件
+                showAlert(1, '正在上传SEC数据表...', 'success');
+                const secResult = await uploadFile(document.getElementById('secFile1'), 'sec');
+                uploadedFiles['sec_1'] = secResult.cache_key;
+
+                // 执行对比
+                showAlert(1, '正在对比数据...', 'success');
+                const compareResponse = await fetch(`${API_BASE}/business1/compare`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        a2_key: uploadedFiles['a2_1'],
+                        sec_key: uploadedFiles['sec_1'],
+                        year_month: parseInt(yearMonth)
+                    })
+                });
+
+                const compareResult = await compareResponse.json();
+                if (!compareResult.success) {
+                    throw new Error(compareResult.message);
+                }
+
+                // 显示结果
+                showAlert(1, '对比完成！', 'success');
+                displayResult1(compareResult);
+                
+            } catch (error) {
+                showAlert(1, error.message, 'error');
+            } finally {
+                showLoading(1, false);
+            }
+        }
+
+        function displayResult1(result) {
+            const resultDiv = document.getElementById('result1');
+            const statsDiv = document.getElementById('statistics1');
+            
+            statsDiv.innerHTML = `
+                <div class="stat-card">
+                    <div class="number">${result.statistics.total}</div>
+                    <div class="label">总井数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">${result.statistics.evaluated}</div>
+                    <div class="label">参评井数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">${result.statistics.not_evaluated}</div>
+                    <div class="label">非参评井数</div>
+                </div>
+            `;
+            
+            if (result.output_file) {
+                statsDiv.innerHTML += `
+                    <div class="stat-card" style="grid-column: span 3;">
+                        <button class="btn btn-success" onclick="downloadFile('${result.output_file}')">
+                            下载结果文件
+                        </button>
+                    </div>
+                `;
+            }
+            
+            resultDiv.style.display = 'block';
+        }
+
+        function clearPanel1() {
+            document.getElementById('a2File1').value = '';
+            document.getElementById('secFile1').value = '';
+            document.getElementById('yearMonth1').value = '';
+            document.getElementById('result1').style.display = 'none';
+        }
+
+        // 第二业务界面功能
+        async function compareYearlyA2() {
+            try {
+                showLoading(2, true);
+                const year = document.getElementById('year2').value;
+                
+                if (!year || year.length !== 4) {
+                    throw new Error('请输入4位数字的年份，如2025');
+                }
+
+                // 上传文件
+                showAlert(2, '正在上传上年度A2数据表...', 'success');
+                const lastYearResult = await uploadFile(document.getElementById('lastYearA2'), 'a2');
+                
+                showAlert(2, '正在上传本年度A2数据表...', 'success');
+                const thisYearResult = await uploadFile(document.getElementById('thisYearA2'), 'a2');
+
+                // 执行对比
+                showAlert(2, '正在对比数据...', 'success');
+                const response = await fetch(`${API_BASE}/business2/compare`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        last_year_key: lastYearResult.cache_key,
+                        this_year_key: thisYearResult.cache_key,
+                        year: parseInt(year)
+                    })
+                });
+
+                const result = await response.json();
+                if (!result.success) {
+                    throw new Error(result.message);
+                }
+
+                showAlert(2, '对比完成！', 'success');
+                displayResult2(result);
+                
+            } catch (error) {
+                showAlert(2, error.message, 'error');
+            } finally {
+                showLoading(2, false);
+            }
+        }
+
+        function displayResult2(result) {
+            const resultDiv = document.getElementById('result2');
+            const statsDiv = document.getElementById('statistics2');
+            
+            statsDiv.innerHTML = `
+                <div class="stat-card">
+                    <div class="number">${result.statistics.cancelled}</div>
+                    <div class="label">注销井数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">${result.statistics.new}</div>
+                    <div class="label">新投井数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">${result.statistics.unit_changed}</div>
+                    <div class="label">单元变化井数</div>
+                </div>
+            `;
+            
+            if (result.output_files) {
+                statsDiv.innerHTML += `
+                    <div class="stat-card" style="grid-column: span 3;">
+                        <button class="btn btn-success" onclick="downloadFile('${result.output_files.cancelled}')" style="margin: 5px;">
+                            下载注销井表
+                        </button>
+                        <button class="btn btn-success" onclick="downloadFile('${result.output_files.new_wells}')" style="margin: 5px;">
+                            下载新投井表
+                        </button>
+                        <button class="btn btn-success" onclick="downloadFile('${result.output_files.unit_changed}')" style="margin: 5px;">
+                            下载单元变化表
+                        </button>
+                    </div>
+                `;
+            }
+            
+            resultDiv.style.display = 'block';
+        }
+
+        function clearPanel2() {
+            document.getElementById('lastYearA2').value = '';
+            document.getElementById('thisYearA2').value = '';
+            document.getElementById('year2').value = '';
+            document.getElementById('result2').style.display = 'none';
+        }
+
+        // 第三业务界面功能
+        async function generateSECTable() {
+            try {
+                showLoading(3, true);
+                
+                const thisYear = document.getElementById('thisYear3').value;
+                const thisYearMonth = document.getElementById('thisYearMonth3').value;
+                
+                if (!thisYear || thisYear.length !== 4) {
+                    throw new Error('请输入4位数字的年份，如2025');
+                }
+                
+                if (!thisYearMonth || thisYearMonth.length !== 6) {
+                    throw new Error('请输入6位数字的年月，如202509');
+                }
+                
+                // 上传上年度SEC数据表
+                showAlert(3, '正在上传上年度SEC数据表...', 'success');
+                const lastYearSecResult = await uploadFile(document.getElementById('lastYearSEC'), 'sec');
+                
+                // 上传单元变化表（可选）
+                let unitChangeResult = null;
+                if (document.getElementById('unitChangeFile').files[0]) {
+                    showAlert(3, '正在上传单元变化表...', 'success');
+                    unitChangeResult = await uploadFile(document.getElementById('unitChangeFile'), 'unit_change');
+                }
+                
+                // 上传老区新井表（可选）
+                let oldAreaWellsResult = null;
+                if (document.getElementById('oldAreaWellsFile').files[0]) {
+                    showAlert(3, '正在上传老区新井表...', 'success');
+                    oldAreaWellsResult = await uploadFile(document.getElementById('oldAreaWellsFile'), 'new_wells');
+                }
+                
+                // 上传扩边/PUD转PDP/PDNP表（可选）
+                let pudPdpPdnpResult = null;
+                if (document.getElementById('pudPdpPdnpFile').files[0]) {
+                    showAlert(3, '正在上传扩边/PUD转PDP/PDNP表...', 'success');
+                    pudPdpPdnpResult = await uploadFile(document.getElementById('pudPdpPdnpFile'), 'pud_pdp_pdnp');
+                }
+                
+                // 生成本年度SEC表
+                showAlert(3, '正在生成本年度SEC数据表...', 'success');
+                const response = await fetch(`${API_BASE}/business3/generate`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        last_year_sec_key: lastYearSecResult.cache_key,
+                        unit_change_key: unitChangeResult ? unitChangeResult.cache_key : '',
+                        old_area_wells_key: oldAreaWellsResult ? oldAreaWellsResult.cache_key : '',
+                        pud_pdp_pdnp_key: pudPdpPdnpResult ? pudPdpPdnpResult.cache_key : '',
+                        this_year: parseInt(thisYear),
+                        this_year_month: parseInt(thisYearMonth)
+                    })
+                });
+                
+                const result = await response.json();
+                if (!result.success) {
+                    throw new Error(result.message);
+                }
+                
+                showAlert(3, '本年度SEC数据表生成完成！', 'success');
+                displayResult3(result);
+                
+            } catch (error) {
+                showAlert(3, error.message, 'error');
+            } finally {
+                showLoading(3, false);
+            }
+        }
+        
+        function displayResult3(result) {
+            const resultDiv = document.getElementById('result3');
+            const contentDiv = document.getElementById('content3');
+            
+            contentDiv.innerHTML = `
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+                    <h4>生成统计</h4>
+                    <p>总井数：${result.total_wells}</p>
+                    <div style="margin-top: 15px;">
+                        <button class="btn btn-success" onclick="downloadFile('${result.output_file}')">
+                            下载本年度SEC数据表
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            resultDiv.style.display = 'block';
+        }
+
+        function clearPanel3() {
+            document.getElementById('lastYearSEC').value = '';
+            document.getElementById('unitChangeFile').value = '';
+            document.getElementById('oldAreaWellsFile').value = '';
+            document.getElementById('pudPdpPdnpFile').value = '';
+            document.getElementById('thisYear3').value = '';
+            document.getElementById('thisYearMonth3').value = '';
+            document.getElementById('result3').style.display = 'none';
+        }
+
+        // 第四业务界面功能 - 显示子页面
+        function generateEvaluationTable() {
+            // 获取评估类型
+            const evalType = document.getElementById('evalType4').value;
+            
+            if (evalType === 'conventional') {
+                showConventionalSubpage();
+            } else {
+                showShaleSubpage();
+            }
+        }
+        
+        // 显示常规油子页面
+        function showConventionalSubpage() {
+            const contentDiv = document.getElementById('content4');
+            contentDiv.innerHTML = `
+                <div style="background: #f8f9fa; padding: 15px; border-left: 4px solid #0066cc; border: 1px solid #e0e0e0; margin-bottom: 20px;">
+                    <h4>常规油评估数据表 - 处理流程</h4>
+                    <ol style="margin: 10px 0; padding-left: 20px; color: #555;">
+                        <li>调整历史数据：基于上年度评估数据和SEC单元变化，调整历史数据</li>
+                        <li>加入新增井：添加扩边/PUD转PDP/PDNP井和老区新井</li>
+                        <li>更新年度数据：更新老井的年度生产数据</li>
+                    </ol>
+                </div>
+                
+                <div class="form-group">
+                    <label>上传上年度常规油评估数据表：</label>
+                    <input type="file" id="lastYearConventionalEval" accept=".xlsx,.xls">
+                    <small style="color: #666;">必需项</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>上传年度油井SEC单元变化表：</label>
+                    <input type="file" id="secUnitChange4" accept=".xlsx,.xls">
+                    <small style="color: #666;">必需项</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>上传油井历史生产数据：</label>
+                    <input type="file" id="historicalProdData4" accept=".xlsx,.xls">
+                    <small style="color: #666;">必需项</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>上传扩边/PUD转PDP/PDNP数据表：</label>
+                    <input type="file" id="pudPdpPdnp4" accept=".xlsx,.xls">
+                    <small style="color: #666;">必需项</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>上传老区新井数据表：</label>
+                    <input type="file" id="oldAreaNewWells4" accept=".xlsx,.xls">
+                    <small style="color: #666;">必需项</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>上传上年度SEC数据表：</label>
+                    <input type="file" id="lastYearSec4" accept=".xlsx,.xls">
+                    <small style="color: #666;">必需项</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>上传本年度SEC数据表：</label>
+                    <input type="file" id="currentYearSec4" accept=".xlsx,.xls">
+                    <small style="color: #666;">必需项（第三业务界面结果）</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>上传A2数据表（12个月）：</label>
+                    <input type="file" id="a2Data4" accept=".xlsx,.xls">
+                    <small style="color: #666;">必需项（12个月份数据）</small>
+                </div>
+                
+                <button class="btn btn-primary" onclick="processConventionalEvaluation()">处理常规油评估数据</button>
+            `;
+        }
+        
+        // 显示页岩油子页面
+        function showShaleSubpage() {
+            const contentDiv = document.getElementById('content4');
+            contentDiv.innerHTML = `
+                <div style="background: #f8f9fa; padding: 15px; border-left: 4px solid #0066cc; border: 1px solid #e0e0e0; margin-bottom: 20px;">
+                    <h4>页岩油评估数据表 - 处理流程</h4>
+                    <p style="margin: 10px 0; color: #555;">基于上年度页岩油评估数据，结合扩边/PUD井和A2数据，更新年度数据</p>
+                </div>
+                
+                <div class="form-group">
+                    <label>上传上年度页岩油评估数据表：</label>
+                    <input type="file" id="lastYearShaleEval" accept=".xlsx,.xls">
+                    <small style="color: #666;">必需项</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>上传扩边/PUD转PDP/PDNP数据表：</label>
+                    <input type="file" id="pudPdpPdnpShale" accept=".xlsx,.xls">
+                    <small style="color: #666;">必需项</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>上传A2数据表（12个月）：</label>
+                    <input type="file" id="a2DataShale" accept=".xlsx,.xls">
+                    <small style="color: #666;">必需项（12个月份数据）</small>
+                </div>
+                
+                <button class="btn btn-primary" onclick="processShaleEvaluation()">处理页岩油评估数据</button>
+            `;
+        }
+        
+        // 处理常规油评估数据
+        async function processConventionalEvaluation() {
+            try {
+                showLoading(4, true);
+                showAlert(4, '正在上传文件...', 'success');
+                
+                // 上传所有必需的文件
+                const lastYearEvalResult = await uploadFile(document.getElementById('lastYearConventionalEval'), 'evaluation');
+                const secUnitChangeResult = await uploadFile(document.getElementById('secUnitChange4'), 'sec_unit_change');
+                const historicalProdDataResult = await uploadFile(document.getElementById('historicalProdData4'), 'historical_prod');
+                const pudPdpPdnpResult = await uploadFile(document.getElementById('pudPdpPdnp4'), 'pud_pdp_pdnp');
+                const oldAreaNewWellsResult = await uploadFile(document.getElementById('oldAreaNewWells4'), 'new_wells');
+                const lastYearSecResult = await uploadFile(document.getElementById('lastYearSec4'), 'sec');
+                const currentYearSecResult = await uploadFile(document.getElementById('currentYearSec4'), 'sec');
+                const a2DataResult = await uploadFile(document.getElementById('a2Data4'), 'a2');
+                
+                showAlert(4, '正在处理常规油评估数据...', 'success');
+                
+                // 调用API处理常规油评估数据
+                const response = await fetch(`${API_BASE}/business4/generate_conventional`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        last_year_eval_key: lastYearEvalResult.cache_key,
+                        sec_unit_change_key: secUnitChangeResult.cache_key,
+                        historical_prod_data_key: historicalProdDataResult.cache_key,
+                        pud_pdp_pdnp_key: pudPdpPdnpResult.cache_key,
+                        old_area_new_wells_key: oldAreaNewWellsResult.cache_key,
+                        last_year_sec_key: lastYearSecResult.cache_key,
+                        current_year_sec_key: currentYearSecResult.cache_key,
+                        a2_data_key: a2DataResult.cache_key
+                    })
+                });
+                
+                const result = await response.json();
+                if (!result.success) {
+                    throw new Error(result.message);
+                }
+                
+                showAlert(4, '常规油评估数据处理完成！', 'success');
+                displayEvaluationResult(result);
+                
+            } catch (error) {
+                showAlert(4, error.message, 'error');
+            } finally {
+                showLoading(4, false);
+            }
+        }
+        
+        // 处理页岩油评估数据
+        async function processShaleEvaluation() {
+            try {
+                showLoading(4, true);
+                showAlert(4, '正在上传文件...', 'success');
+                
+                // 上传必需的文件
+                const lastYearShaleResult = await uploadFile(document.getElementById('lastYearShaleEval'), 'evaluation');
+                const pudPdpPdnpResult = await uploadFile(document.getElementById('pudPdpPdnpShale'), 'pud_pdp_pdnp');
+                const a2DataResult = await uploadFile(document.getElementById('a2DataShale'), 'a2');
+                
+                showAlert(4, '正在处理页岩油评估数据...', 'success');
+                
+                // 调用API处理页岩油评估数据
+                const response = await fetch(`${API_BASE}/business4/generate_shale`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        last_year_shale_eval_key: lastYearShaleResult.cache_key,
+                        pud_pdp_pdnp_key: pudPdpPdnpResult.cache_key,
+                        a2_data_key: a2DataResult.cache_key,
+                        evaluation_months: []  // 可以传入特定的月份列表
+                    })
+                });
+                
+                const result = await response.json();
+                if (!result.success) {
+                    throw new Error(result.message);
+                }
+                
+                showAlert(4, '页岩油评估数据处理完成！', 'success');
+                displayEvaluationResult(result);
+                
+            } catch (error) {
+                showAlert(4, error.message, 'error');
+            } finally {
+                showLoading(4, false);
+            }
+        }
+        
+        // 显示评估结果
+        function displayEvaluationResult(result) {
+            const resultDiv = document.getElementById('result4');
+            const contentDiv = document.getElementById('content4');
+            
+            contentDiv.innerHTML = `
+                <div style="background: #f8f9fa; padding: 15px; border-left: 4px solid #0066cc; border: 1px solid #e0e0e0; margin-bottom: 20px;">
+                    <h4>处理结果</h4>
+                    <p>总记录数：${result.total_records}</p>
+                    <p>文件名：${result.output_file}</p>
+                    <div style="margin-top: 15px;">
+                        <button class="btn btn-success" onclick="downloadFile('${result.output_file}')">
+                            重新下载评估数据表
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            resultDiv.style.display = 'block';
+            
+            // 自动触发下载
+            setTimeout(() => {
+                downloadFile(result.output_file);
+            }, 1000); // 延迟1秒，让用户看到处理结果
+        }
+
+        function clearPanel4() {
+            document.getElementById('evalType4').value = 'conventional';
+            document.getElementById('result4').style.display = 'none';
+        }
+
+        // 下载文件
+        function downloadFile(filename) {
+            window.location.href = `${API_BASE}/download/${filename}`;
+        }
+
+        console.log('石油数据预处理系统已加载');
+    </script>
+</body>
+</html>
