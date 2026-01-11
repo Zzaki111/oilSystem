@@ -22,3 +22,6 @@ data/output/*
 # OS
 .DS_Store
 Thumbs.db
+oil_env/
+temp_*.py
+test_*.py
