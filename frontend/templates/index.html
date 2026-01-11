@@ -364,6 +364,10 @@
         <div class="header">
             <h1>SEC评估石油PD证实储量生产数据预处理工具</h1>
             <p>Oil Production Data Preprocessing System for Listed Reserve Value Assessment</p>
+            <div style="position: absolute; top: 20px; right: 20px;">
+                <button class="btn btn-secondary" onclick="changePassword()" style="padding: 8px 15px; font-size: 12px; margin-right: 10px;">修改密码</button>
+                <button class="btn btn-secondary" onclick="logout()" style="padding: 8px 15px; font-size: 12px;">退出登录</button>
+            </div>
         </div>
 
         <div class="content">
@@ -1165,6 +1169,37 @@
         // 下载文件
         function downloadFile(filename) {
             window.location.href = `${API_BASE}/download/${filename}`;
+        }
+
+        // 登出功能
+        async function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                try {
+                    const response = await fetch(`${API_BASE}/logout`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // 跳转到登录页
+                        window.location.href = '/login';
+                    } else {
+                        alert('退出登录失败: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('退出登录请求失败:', error);
+                    alert('退出登录失败，请检查网络连接');
+                }
+            }
+        }
+
+        // 修改密码功能
+        function changePassword() {
+            window.location.href = '/change_password';
         }
 
         console.log('石油数据预处理系统已加载');

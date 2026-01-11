@@ -3,12 +3,14 @@ Flask后端应用
 提供RESTful API接口
 """
 
-from flask import Flask, request, jsonify, send_file, render_template
+from flask import Flask, request, jsonify, send_file, render_template, redirect, url_for, session
 from flask_cors import CORS
 import os
 import sys
 import traceback
 import pandas as pd
+import hashlib
+import json
 
 # 添加项目路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -29,6 +31,7 @@ OUTPUT_DIR = os.path.join(BASE_DIR, 'data', 'output')
 app = Flask(__name__, 
             template_folder=TEMPLATE_DIR,
             static_folder=STATIC_DIR)
+app.secret_key = 'oil_system_secret_key_2026_for_authentication'
 CORS(app)
 
 # 确保目录存在
@@ -38,11 +41,110 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 # 全局缓存数据
 cached_data = {}
 
+# 用户账户数据
+user_accounts = {
+    'admin': 'yangjunOil2026'  # 初始密码
+}
+
 
 @app.route('/')
 def index():
-    """首页"""
+    """首页 - 如果未登录则跳转到登录页"""
+    if 'logged_in' not in session:
+        return redirect(url_for('login'))
     return render_template('index.html')
+
+
+@app.route('/login')
+def login():
+    """登录页面"""
+    return render_template('login.html')
+
+
+@app.route('/change_password')
+def change_password():
+    """修改密码页面"""
+    if 'logged_in' not in session or not session['logged_in']:
+        return redirect(url_for('login'))
+    return render_template('change_password.html')
+
+
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    """登录API接口"""
+    try:
+        data = request.json
+        username = data.get('username')
+        password = data.get('password')
+        
+        # 默认账户验证
+        if username in user_accounts and user_accounts[username] == password:
+            session['logged_in'] = True
+            session['username'] = username
+            return jsonify({'success': True, 'message': '登录成功'})
+        else:
+            return jsonify({'success': False, 'message': '用户名或密码错误'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'登录失败: {str(e)}'})
+
+
+@app.route('/api/logout', methods=['POST'])
+def api_logout():
+    """登出API接口"""
+    session.pop('logged_in', None)
+    session.pop('username', None)
+    return jsonify({'success': True, 'message': '已登出'})
+
+
+@app.route('/api/change_password', methods=['POST'])
+def api_change_password():
+    """修改密码API接口"""
+    try:
+        if 'logged_in' not in session or not session['logged_in']:
+            return jsonify({'success': False, 'message': '请先登录'})
+        
+        data = request.json
+        username = data.get('username')
+        old_password = data.get('old_password')
+        new_password = data.get('new_password')
+        
+        # 验证输入参数
+        if not all([username, old_password, new_password]):
+            return jsonify({'success': False, 'message': '请填写完整的账户信息'})
+        
+        # 验证当前登录用户与请求修改的用户是否一致
+        if session['username'] != username:
+            return jsonify({'success': False, 'message': '无权修改其他用户的密码'})
+        
+        # 验证原密码是否正确
+        if username in user_accounts and user_accounts[username] == old_password:
+            # 密码强度验证
+            if not validate_password_strength(new_password):
+                return jsonify({'success': False, 'message': '新密码必须包含小写字母、大写字母、数字和特殊符号中的至少3项'})
+            
+            # 更新密码
+            user_accounts[username] = new_password
+            return jsonify({'success': True, 'message': '密码修改成功'})
+        else:
+            return jsonify({'success': False, 'message': '原密码错误'})
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'修改密码失败: {str(e)}'})
+
+
+def validate_password_strength(password):
+    """验证密码强度，必须包含小写字母、大写字母、数字和特殊符号中的至少3项"""
+    import re
+    
+    has_lower = bool(re.search(r'[a-z]', password))
+    has_upper = bool(re.search(r'[A-Z]', password))
+    has_digit = bool(re.search(r'\d', password))
+    has_special = bool(re.search(r'[!@#$%^&*(),.?:{}|<>]', password))
+    
+    conditions = [has_lower, has_upper, has_digit, has_special]
+    true_count = sum(conditions)
+    
+    return true_count >= 3
 
 
 @app.route('/api/upload', methods=['POST'])
@@ -403,4 +505,4 @@ if __name__ == '__main__':
     print(f"数据输入目录: {INPUT_DIR}")
     print(f"数据输出目录: {OUTPUT_DIR}")
     print("启动Flask服务...")
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    app.run(host='0.0.0.0', port=5001, debug=False)
